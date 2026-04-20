@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mydb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: db1004        # 루트 비밀번호
+      MYSQL_DATABASE: honuxdb               # 초기 생성할 DB명
+      MYSQL_USER: honux
+      MYSQL_PASSWORD: bandi1004
+    ports:
+      - "3306:3306"
+    volumes:
+      # 1️⃣ MySQL 데이터 파일 (DB 데이터)
+      - ./mysql_data:/var/lib/mysql
+
+      # 2️⃣ CSV 파일 (LOAD DATA INFILE용)
+      - ./csv_files:/var/lib/mysql-files
+
+    command:
+      --local-infile=1
+      --secure-file-priv=/var/lib/mysql-files
+      --innodb-buffer-pool-size=1G
+      --innodb-redo-log-capacity=512M
+      --innodb-flush-log-at-trx-commit=2
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --init-connect=SET NAMES utf8mb4
