@@ -139,3 +139,13 @@ ALTER TABLE trade DROP INDEX idx_seller_date;
 | `insert.sql` | LOAD DATA로 CSV 삽입 |
 | `benchmark.sql` | 인덱스 전후 성능 측정 쿼리 |
 | `tip.md` | Bulk insert 성능 팁 |
+
+---
+
+## 데이터 생성 방식에 대해
+
+`namae.py`, `ninckname.py`, `amoosoo.py`는 외부 라이브러리(Faker 등) 대신 직접 작성한 함수를 사용한다.
+
+이유는 이 실험의 핵심이 **분포 제어**에 있기 때문이다. `money`의 정규분포, `last_visit`의 감마분포(최근 접속일수록 빈도 높음), `grank`의 확률 가중치(B 50%, S 25%, ...)는 인덱스 효과를 측정하기 위해 의도적으로 설계된 값이다. Faker 같은 범용 라이브러리는 이런 세밀한 분포 조정을 지원하지 않는다.
+
+한글 이름(`namae.py`)도 마찬가지로, 성씨 빈도 가중치와 복성 포함 여부를 직접 제어하기 위해 커스텀으로 유지한다.
