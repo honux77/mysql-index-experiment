@@ -5,4 +5,3 @@ csv_files/
 mysql_data/
 guser.csv
 trade.csv
-*.ipynb
