@@ -54,18 +54,18 @@ def _pick_syllable(gender: Literal["male","female","any"], position: Literal["fi
 def make_korean_name(
     gender: Literal["male","female","any"]="any",
     include_compound_surname: bool=False,
-    two_syllable_given: bool=True,
-    separator: str="",            # "" (공백 없음) 또는 " " (성/이름 사이 공백)
+    single_name_ratio: float=0.03,  # 외자 이름 비율 (통계청 기준 약 3%)
+    separator: str="",              # "" (공백 없음) 또는 " " (성/이름 사이 공백)
 ) -> str:
     """
     한국식 이름 생성기 (기본: 성 1글자 + 이름 2글자 = 3글자, 공백 없음)
+    single_name_ratio 확률로 이름이 1음절(외자)이 된다.
     """
     surname = _pick_surname(include_compound_surname)
-    if two_syllable_given:
-        given = _pick_syllable(gender, "first") + _pick_syllable(gender, "second")
-    else:
-        # 드물지만 1음절 이름 옵션
+    if random.random() < single_name_ratio:
         given = _pick_syllable(gender, "first")
+    else:
+        given = _pick_syllable(gender, "first") + _pick_syllable(gender, "second")
     if separator:
         return f"{surname}{separator}{given}"
     return f"{surname}{given}"
@@ -75,13 +75,14 @@ def generate_names(
     n: int,
     gender: Literal["male","female","any"]="any",
     include_compound_surname: bool=False,
-    two_syllable_given: bool=True,
+    single_name_ratio: float=0.03,  # 외자 이름 비율
     separator: str="",
     unique: bool=False,
     seed: Optional[int]=None,
 ) -> List[str]:
     """
     n개의 이름을 생성.
+    - single_name_ratio: 외자 이름(1음절 given) 비율 (기본 3%)
     - unique=True: 중복 제거(필요 시 더 뽑아 채움 — 충돌이 많으면 시간이 늘 수 있음)
     - seed: 난수 고정
     """
@@ -101,14 +102,15 @@ def generate_names(
         syl_pool = SYL_NEUT + SYL_MASC + SYL_FEM
     syl_weights = _weights_for(syl_pool)
 
-    surnames   = random.choices(pool,     weights=s_weights,   k=n)
-    first_syls = random.choices(syl_pool, weights=syl_weights, k=n)
+    surnames    = random.choices(pool,     weights=s_weights,   k=n)
+    first_syls  = random.choices(syl_pool, weights=syl_weights, k=n)
+    second_syls = random.choices(syl_pool, weights=syl_weights, k=n)
+    is_single   = [random.random() < single_name_ratio for _ in range(n)]
 
-    if two_syllable_given:
-        second_syls = random.choices(syl_pool, weights=syl_weights, k=n)
-        names = [f"{s}{separator}{f}{g}" for s, f, g in zip(surnames, first_syls, second_syls)]
-    else:
-        names = [f"{s}{separator}{f}" for s, f in zip(surnames, first_syls)]
+    names = [
+        f"{s}{separator}{f}" if single else f"{s}{separator}{f}{g}"
+        for s, f, g, single in zip(surnames, first_syls, second_syls, is_single)
+    ]
 
     if not unique:
         return names
@@ -129,3 +131,8 @@ if __name__ == "__main__":
     print("남성 스타일 5개:", generate_names(5, gender="male", seed=43))
     print("여성 스타일 5개(복성 허용, 공백 포함):", generate_names(5, gender="female", include_compound_surname=True, separator=" ", seed=44))
     print("유일 20개:", generate_names(20, unique=True, seed=45))
+
+    # 외자 비율 확인
+    sample = generate_names(10_000, seed=99)
+    single_cnt = sum(1 for name in sample if len(name) == 2)
+    print(f"\n외자 비율 확인 (N=10,000): {single_cnt}건 ({single_cnt/len(sample)*100:.1f}%)")

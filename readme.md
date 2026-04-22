@@ -142,6 +142,23 @@ ALTER TABLE trade DROP INDEX idx_seller_date;
 
 ---
 
+## 샘플 데이터 분포
+
+아래 그래프는 `userdataCheckV3.ipynb`에서 N=100,000 샘플로 생성한 컬럼별 분포다.
+
+![guser 컬럼별 분포](images/data_distribution.png)
+
+| 컬럼 | 분포 특성 |
+|------|----------|
+| `money` | 정규분포 (평균 500만, std 83만) |
+| `grank` | B 50% → S 25% → G 15% → P 5% → D 3% → C 2% |
+| `start_date` | 균등분포 |
+| `last_visit` | 감마분포 (최근일수록 빈도 높음) |
+| `name` | 한글 성씨 빈도 가중치 적용, 복성 포함 |
+| `nickname` | 고유값 100% |
+
+---
+
 ## 데이터 생성 방식에 대해
 
 `namae.py`, `ninckname.py`, `amoosoo.py`는 외부 라이브러리(Faker 등) 대신 직접 작성한 함수를 사용한다.
